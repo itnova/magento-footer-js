@@ -80,7 +80,6 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
 		// This should be replaced by a better method that's adding defer if it's not present
-		// Replace all script tags with defer
 		$html = str_replace("<script","<script defer", $html);
 		// If there is already a defer, delete the second
 		$html = str_replace("defer defer","defer", $html);
