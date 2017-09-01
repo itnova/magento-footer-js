@@ -65,25 +65,35 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
         foreach($patterns as $pattern) {
             $matches = array();
 
+            $addDeferFlag = array();
             $success = preg_match_all($pattern, $html, $matches);
             if ($success) {
                 // Strip excluded files
                 if ($this->getSkippedFilesRegex() !== false) {
                     $matches[0] = preg_grep($this->getSkippedFilesRegex(), $matches[0], PREG_GREP_INVERT);
                 }
-
                 foreach ($matches[0] as $key => $js) {
                     if ($this->_excludeFromFooter($js)) {
                         // Excluded, so remove the js block from the matches.
                         unset($matches[0][$key]);
                     } else if (strpos($js, ' defer') === false) {
-                        // Move to footer, add `defer` flag.
-                        $matches[0][$key] = str_replace("<script", "<script defer", $js);
-                    } // else... Move to footer.
+                        // Move to footer, mark this js block to be marked with the `defer` flag.
+                        $addDeferFlag[] = $key;
+                    }
                 }
 
-                $text = implode('', $matches[0]);
+                // Remove all js blocks that will be added to the footer.
                 $html = str_replace($matches[0], '', $html);
+
+                // Mark the js blocks as `defered`.
+                foreach ($addDeferFlag as $key) {
+                    $matches[0][$key] = str_replace("<script", "<script defer", $matches[0][$key]);
+                }
+
+                // Combine all matches that will be added to the footer.
+                $text = implode('', $matches[0]);
+
+                // The html with the removed js blocks + the js footer blocks.
                 $html = $html . $text;
             }
         }
