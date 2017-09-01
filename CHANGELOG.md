@@ -4,6 +4,11 @@ All notable changes to this extension will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.3.2] - 2017-09-01
+### Changed
+- Applied a better `fix` for adding the `defer` keyword to the moved script tags.
+- Also check if we need to exclude a js block because of a `pagespeed_no_defer` flag.
+
 ## [0.1.3.1] - 2017-08-31
 ### Changed
 - Applied a quick `fix` for adding the `defer` keyword to all script tags.
