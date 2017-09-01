@@ -13,6 +13,8 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
     const EXCLUDE_FLAG = 'data-footer-js-skip="true"';
     const EXCLUDE_FLAG_PATTERN = 'data-footer-js-skip';
 
+    const PAGESPEED_NO_DEFER_FLAG = 'pagespeed_no_defer';
+
     /** @var array */
     protected $_blocksToExclude;
 
@@ -41,7 +43,8 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
             $success = preg_match_all($pattern, $html, $matches);
             if ($success) {
                 foreach ($matches[0] as $key => $js) {
-                    if (strpos($js, self::EXCLUDE_FLAG_PATTERN) !== false) {
+                    if ($this->_excludeFromFooter($js)) {
+                        // Excluded, so remove the js block from the matches.
                         unset($matches[0][$key]);
                     }
                 }
@@ -68,11 +71,17 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                 if ($this->getSkippedFilesRegex() !== false) {
                     $matches[0] = preg_grep($this->getSkippedFilesRegex(), $matches[0], PREG_GREP_INVERT);
                 }
+
                 foreach ($matches[0] as $key => $js) {
-                    if (strpos($js, self::EXCLUDE_FLAG_PATTERN) !== false) {
+                    if ($this->_excludeFromFooter($js)) {
+                        // Excluded, so remove the js block from the matches.
                         unset($matches[0][$key]);
-                    }
+                    } else if (strpos($js, ' defer') === false) {
+                        // Move to footer, add `defer` flag.
+                        $matches[0][$key] = str_replace("<script", "<script defer", $js);
+                    } // else... Move to footer.
                 }
+
                 $text = implode('', $matches[0]);
                 $html = str_replace($matches[0], '', $html);
                 $html = $html . $text;
@@ -80,6 +89,19 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
         }
 
         return $html;
+    }
+
+    /**
+     * Check if we need to exclude the given js block.
+     * Look for `Meanbee` and `pagespeed` exclude flags.
+     *
+     * @param $js
+     * @return boolean
+     */
+    protected function _excludeFromFooter($js)
+    {
+        return strpos($js, self::EXCLUDE_FLAG_PATTERN) !== false ||
+               strpos($js, self::PAGESPEED_NO_DEFER_FLAG) !== false;
     }
 
     public function getSkippedFilesRegex()
@@ -98,7 +120,7 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
 
     /**
      * Add skip flag to all js in given html
-     * 
+     *
      * @param string $html
      * @return string
      */
