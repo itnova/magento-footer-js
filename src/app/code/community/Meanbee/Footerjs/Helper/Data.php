@@ -21,6 +21,8 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
     /** @var string */
     protected $skippedFilesRegex;
 
+    protected $_appendToEOF = array();
+
     /**
      * @param null $store
      *
@@ -65,7 +67,6 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
         foreach($patterns as $pattern) {
             $matches = array();
 
-            $addDeferFlag = array();
             $success = preg_match_all($pattern, $html, $matches);
             if ($success) {
                 // Strip excluded files
@@ -76,25 +77,21 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                     if ($this->_excludeFromFooter($js)) {
                         // Excluded, so remove the js block from the matches.
                         unset($matches[0][$key]);
-                    } else if (strpos($js, ' defer') === false) {
-                        // Move to footer, mark this js block to be marked with the `defer` flag.
-                        $addDeferFlag[] = $key;
                     }
                 }
 
                 // Remove all js blocks that will be added to the footer.
                 $html = str_replace($matches[0], '', $html);
 
-                // Mark the js blocks as `defered`.
-                foreach ($addDeferFlag as $key) {
-                    $matches[0][$key] = str_replace("<script", "<script defer", $matches[0][$key]);
+                // Handle all matches that will be added to the EOF.
+                foreach ($matches[0] as $match) {
+                    $this->_appendToEOF[] = trim($match);
                 }
 
-                // Combine all matches that will be added to the footer.
-                $text = implode('', $matches[0]);
-
-                // The html with the removed js blocks + the js footer blocks.
-                $html = $html . $text;
+                if ($pattern == self::REGEX_DOCUMENT_END && $this->_appendToEOF) {
+                    $html .= array_pop($this->_appendToEOF) . PHP_EOL . implode(PHP_EOL, $this->_appendToEOF);
+                    $this->_appendToEOF = array();
+                }
             }
         }
 
@@ -111,7 +108,7 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
     protected function _excludeFromFooter($js)
     {
         return strpos($js, self::EXCLUDE_FLAG_PATTERN) !== false ||
-               strpos($js, self::PAGESPEED_NO_DEFER_FLAG) !== false;
+            strpos($js, self::PAGESPEED_NO_DEFER_FLAG) !== false;
     }
 
     public function getSkippedFilesRegex()
