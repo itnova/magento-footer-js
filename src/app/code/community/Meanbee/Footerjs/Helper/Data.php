@@ -76,7 +76,7 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                     if ($this->_excludeFromFooter($js)) {
                         // Excluded, so remove the js block from the matches.
                         unset($matches[0][$key]);
-                    } else if (strpos($js, ' defer') === false) {
+					} else if (strpos($js, ' defer') === false && strpos($js, ' src') !== false) {
                         // Move to footer, mark this js block to be marked with the `defer` flag.
                         $addDeferFlag[] = $key;
                     }
