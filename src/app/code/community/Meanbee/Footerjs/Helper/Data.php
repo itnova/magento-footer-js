@@ -72,15 +72,16 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                 if ($this->getSkippedFilesRegex() !== false) {
                     $matches[0] = preg_grep($this->getSkippedFilesRegex(), $matches[0], PREG_GREP_INVERT);
                 }
-                foreach ($matches[0] as $key => $js) {
-                    if ($this->_excludeFromFooter($js)) {
-                        // Excluded, so remove the js block from the matches.
-                        unset($matches[0][$key]);
-                    } else if (strpos($js, ' defer') === false) {
-                        // Move to footer, mark this js block to be marked with the `defer` flag.
-                        $addDeferFlag[] = $key;
-                    }
-                }
+
+				foreach ($matches[0] as $key => $js) {
+					if ($this->_excludeFromFooter($js)) {
+						// Excluded, so remove the js block from the matches.
+						unset($matches[0][$key]);
+					} else if (strpos($js, ' defer') === false) {
+						// Move to footer, mark this js block to be marked with the `defer` flag.
+						$addDeferFlag[] = $key;
+					}
+				}
 
                 // Remove all js blocks that will be added to the footer.
                 $html = str_replace($matches[0], '', $html);
@@ -90,7 +91,24 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                     $matches[0][$key] = str_replace("<script", "<script defer", $matches[0][$key]);
                 }
 
-                // Combine all matches that will be added to the footer.
+				foreach ($matches[0] as $key => $js) {
+					if (strpos($js, 'src=')) {
+						continue;
+					}
+
+					$pattern = "/<script\b[^>]*>([\s\S]*?)<\/script>/";
+					if (!preg_match_all($pattern, $js, $regexMatches)) {
+						continue;
+					}
+
+					if (!isset($regexMatches[1])) {
+						continue;
+					}
+
+                    $matches[0][$key] = "<script defer src=\"data:text/javascript;base64," . base64_encode($regexMatches[1][0]) . "\"></script>\n";
+				}
+
+				// Combine all matches that will be added to the footer.
                 $text = implode('', $matches[0]);
 
                 // The html with the removed js blocks + the js footer blocks.
