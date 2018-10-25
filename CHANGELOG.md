@@ -4,6 +4,10 @@ All notable changes to this extension will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [0.1.3.4] - 2018-10-25
+### Changed
+- Don't use defer or base64 encode for AJAX requests.
+
 ## 0.1.3.3
 ### Changed
 - Base64 encode all inline scripts.
