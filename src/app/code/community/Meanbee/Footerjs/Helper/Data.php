@@ -86,27 +86,31 @@ class Meanbee_Footerjs_Helper_Data extends Mage_Core_Helper_Abstract {
                 // Remove all js blocks that will be added to the footer.
                 $html = str_replace($matches[0], '', $html);
 
-                // Mark the js blocks as `defered`.
-                foreach ($addDeferFlag as $key) {
-                    $matches[0][$key] = str_replace("<script", "<script defer", $matches[0][$key]);
+                // Do not use defer or base64 encode for AJAX requests
+                if (!$this->_getRequest()->isXmlHttpRequest()) {
+                    // Mark the js blocks as `defered`.
+                    foreach ($addDeferFlag as $key) {
+                        $matches[0][$key] = str_replace("<script", "<script defer", $matches[0][$key]);
+                    }
+
+                    // Base64 encode inline scripts, so they have a src attribute and can be deferred
+                    foreach ($matches[0] as $key => $js) {
+                        if (strpos($js, 'src=')) {
+                            continue;
+                        }
+
+                        $pattern = "/<script\b[^>]*>([\s\S]*?)<\/script>/";
+                        if (!preg_match_all($pattern, $js, $regexMatches)) {
+                            continue;
+                        }
+
+                        if (!isset($regexMatches[1])) {
+                            continue;
+                        }
+
+                        $matches[0][$key] = "<script defer src=\"data:text/javascript;base64," . base64_encode($regexMatches[1][0]) . "\"></script>\n";
+                    }
                 }
-
-				foreach ($matches[0] as $key => $js) {
-					if (strpos($js, 'src=')) {
-						continue;
-					}
-
-					$pattern = "/<script\b[^>]*>([\s\S]*?)<\/script>/";
-					if (!preg_match_all($pattern, $js, $regexMatches)) {
-						continue;
-					}
-
-					if (!isset($regexMatches[1])) {
-						continue;
-					}
-
-                    $matches[0][$key] = "<script defer src=\"data:text/javascript;base64," . base64_encode($regexMatches[1][0]) . "\"></script>\n";
-				}
 
 				// Combine all matches that will be added to the footer.
                 $text = implode('', $matches[0]);
